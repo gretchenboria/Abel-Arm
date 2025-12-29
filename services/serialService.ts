@@ -181,7 +181,8 @@ class SerialService {
     }
 
     const startTime = Date.now();
-    const steps = Math.max(15, Math.floor(duration / 40)); // At least 15 steps, ~40ms per step for smoother motion
+    // Fewer steps with longer delays for smoother motion - servo needs time to reach each position
+    const steps = Math.max(5, Math.min(10, Math.floor(Math.abs(deltaAngle) / 10)));
 
     for (let i = 0; i <= steps; i++) {
       const elapsed = Date.now() - startTime;
