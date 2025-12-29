@@ -79,7 +79,7 @@ const App: React.FC = () => {
                 ? 'bg-red-950 border-red-500 text-red-200 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
                 : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}
             `}
-            title={isListening ? "Stop Listening" : "Voice Control"}
+            title={isListening ? "Listening... (Click to stop)" : "Voice Control: Click to speak a command (e.g., 'move base to 45 degrees', 'wave', 'go home')"}
           >
             {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
           </button>

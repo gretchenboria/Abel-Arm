@@ -164,7 +164,7 @@ class SerialService {
     }
   }
 
-  async sendCommandSmooth(servo: ServoId, targetAngle: number, currentAngle: number, duration: number = 500) {
+  async sendCommandSmooth(servo: ServoId, targetAngle: number, currentAngle: number, duration: number = 600) {
     if (!this.writer) {
       console.warn('[SERIAL] Cannot send command - no writer available');
       return;
@@ -181,7 +181,7 @@ class SerialService {
     }
 
     const startTime = Date.now();
-    const steps = Math.max(10, Math.floor(duration / 30)); // At least 10 steps, ~30ms per step
+    const steps = Math.max(15, Math.floor(duration / 40)); // At least 15 steps, ~40ms per step for smoother motion
 
     for (let i = 0; i <= steps; i++) {
       const elapsed = Date.now() - startTime;

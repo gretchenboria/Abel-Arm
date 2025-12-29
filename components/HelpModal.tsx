@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, Download, Lock, ShieldAlert } from 'lucide-react';
+import { X, AlertTriangle, Download, Lock, ShieldAlert, Mic } from 'lucide-react';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -53,6 +53,25 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </div>
           </section>
 
+          <section className="bg-purple-950/20 p-4 rounded-lg border border-purple-900/30">
+            <h3 className="font-bold text-purple-400 mb-2 flex items-center gap-2">
+              <Mic className="w-4 h-4" />
+              Voice Control
+            </h3>
+            <p className="mb-2 text-xs text-neutral-400">
+              Click the microphone icon, then speak a command. Watch the Terminal for feedback.
+            </p>
+            <div className="bg-black/40 p-2 rounded text-xs space-y-1 text-neutral-500">
+              <p className="text-white font-semibold mb-1">Example commands:</p>
+              <p>"move base to 45 degrees"</p>
+              <p>"rotate shoulder to 120"</p>
+              <p>"open gripper"</p>
+              <p>"wave" / "nod yes" / "shake no"</p>
+              <p>"hand over" / "pick and place"</p>
+              <p>"go home" / "stop"</p>
+            </div>
+          </section>
+
           <section className="bg-neutral-800/20 p-4 rounded-lg">
             <h3 className="font-bold text-red-400 mb-2 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" />
@@ -66,7 +85,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <span className="text-white font-semibold">Browser:</span> Chrome, Edge, or Opera only. Firefox is not supported.
               </li>
               <li>
-                <span className="text-white font-semibold">Linux:</span> 
+                <span className="text-white font-semibold">Linux:</span>
                 <code className="block bg-black p-1 mt-1 rounded text-xs font-mono">sudo usermod -a -G dialout $USER</code>
               </li>
             </ul>
