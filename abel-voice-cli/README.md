@@ -99,6 +99,31 @@ cargo run -- once --save my-command.py
 cargo run -- once --tts
 ```
 
+### HTTP Service Mode
+
+Start the HTTP service for GUI integration:
+
+```bash
+# Start on default port (8080):
+cargo run -- serve
+
+# Start on custom port:
+cargo run -- serve --port 3000
+```
+
+**What it does:**
+- Provides HTTP endpoints for the web GUI
+- `/health` - Service health check
+- `/interpret` - Interpret voice transcript into robot commands
+- Enables better command interpretation in the web interface
+- GUI automatically detects and uses the service when running
+
+**Benefits:**
+- No need to expose API keys in browser
+- Shared command interpretation logic
+- More reliable than browser-only mode
+- Can run alongside web interface
+
 ### Run Saved Script
 
 Execute a previously generated script:
@@ -188,9 +213,10 @@ Both can be used together:
 ```
 src/
 ├── main.rs       # CLI entry point and command handlers
+├── server.rs     # HTTP service for GUI integration
 ├── audio.rs      # Audio recording with cpal
 ├── whisper.rs    # OpenAI Whisper API client
-├── gemini.rs     # Google Gemini API client
+├── gemini.rs     # Google Gemini API client (script generation + interpretation)
 ├── deepgram.rs   # Deepgram TTS client
 └── executor.rs   # Python script execution in venv
 ```

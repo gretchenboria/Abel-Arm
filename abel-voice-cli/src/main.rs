@@ -3,6 +3,7 @@ mod whisper;
 mod gemini;
 mod deepgram;
 mod executor;
+mod server;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -19,6 +20,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Start HTTP service for GUI integration
+    Serve {
+        /// Port to bind the service to
+        #[arg(short, long, default_value = "8080")]
+        port: u16,
+    },
+
     /// Start an interactive voice control session
     Session {
         /// Save generated scripts to directory
@@ -55,6 +63,9 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Serve { port } => {
+            server::run_server(port).await?;
+        }
         Commands::Session { output_dir, tts } => {
             run_session(output_dir, tts).await?;
         }

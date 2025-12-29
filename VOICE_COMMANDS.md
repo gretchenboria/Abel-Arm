@@ -1,14 +1,34 @@
 # Voice Control Guide
 
-## How It Works
+## Architecture
 
-**Flow:** Click Mic → Speak → Browser transcribes → Gemini interprets → Robot executes
+Abel Arm supports two voice control modes:
+
+### Browser Mode (Default)
+**Flow:** Click Mic → Browser Speech API → Gemini interprets → Robot executes
 
 **Requirements:**
-1. Robot MUST be connected first (voice button disabled otherwise)
-2. Valid `VITE_GEMINI_API_KEY` in `.env` file
-3. Chrome, Edge, or Safari browser
-4. Microphone permission granted
+- Robot connected
+- Valid `VITE_GEMINI_API_KEY` in `.env` file
+- Chrome, Edge, or Safari browser
+- Microphone permission granted
+
+### Service Mode (Enhanced)
+**Flow:** Click Mic → Browser Speech API → Local HTTP Service → Gemini interprets → Robot executes
+
+**Advantages:**
+- More reliable command interpretation
+- Better structured prompts
+- Shared logic with CLI
+- No API key exposure in browser
+
+**Setup:**
+```bash
+cd abel-voice-cli
+cargo run -- serve --port 8080
+```
+
+GUI automatically detects and uses the service if available, falling back to browser mode if not.
 
 ## Supported Commands
 
@@ -34,25 +54,47 @@
 **Connection:** Robot must be connected
 **Language:** English only
 
-## Rust CLI Location
+## Rust CLI Modes
 
-**Path:** `/Users/dr.gretchenboria/abel-arm/abel-voice-cli/`
+**Location:** `/Users/dr.gretchenboria/abel-arm/abel-voice-cli/`
 
-**How it's different:**
-- Uses OpenAI Whisper (better accuracy than browser)
-- Generates Python scripts that are saved
-- Runs scripts in isolated venv
-- Terminal-based, no GUI
+### HTTP Service Mode
+Start service for GUI integration:
+```bash
+cd abel-voice-cli
+cargo run -- serve --port 8080
+```
 
-**Usage:**
+### Interactive Session Mode
+Continuous voice control with script generation:
 ```bash
 cd abel-voice-cli
 cargo run -- session
-# Or
+```
+- Uses OpenAI Whisper (better accuracy than browser)
+- Generates and saves Python scripts
+- Runs scripts in isolated venv
+- Terminal-based with confirmations
+
+### One-Shot Mode
+Single command execution:
+```bash
 cargo run -- once --save my-script.py
 ```
 
-**When to use:**
-- Web voice: Quick testing, visual feedback
-- Rust CLI: Better transcription, script generation, automation
+### Script Execution Mode
+Run saved Python scripts:
+```bash
+cargo run -- run scripts/cmd_001.py
+```
+
+## Comparison
+
+| Feature | Browser Mode | Service Mode | CLI Session |
+|---------|-------------|--------------|-------------|
+| Transcription | Browser API | Browser API | OpenAI Whisper |
+| Interpretation | Direct Gemini | Service Gemini | Service Gemini |
+| Script Generation | No | No | Yes |
+| Visual Feedback | Yes | Yes | No |
+| Best For | Quick testing | Reliable commands | Automation |
 

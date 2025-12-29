@@ -65,6 +65,8 @@ const FUNCTION_DECLARATIONS = [
 class VoiceService {
   private recognition: any = null;
   private isListening = false;
+  private serviceUrl = 'http://localhost:8080';
+  private serviceAvailable: boolean | null = null;
 
   constructor() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -73,6 +75,19 @@ class VoiceService {
       this.recognition.continuous = false;
       this.recognition.interimResults = false;
       this.recognition.lang = 'en-US';
+    }
+    this.checkServiceAvailability();
+  }
+
+  private async checkServiceAvailability() {
+    try {
+      const response = await fetch(`${this.serviceUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(1000)
+      });
+      this.serviceAvailable = response.ok;
+    } catch {
+      this.serviceAvailable = false;
     }
   }
 
@@ -101,6 +116,36 @@ class VoiceService {
   }
 
   async interpretCommand(transcript: string): Promise<VoiceCommand> {
+    // Try using local service first (better accuracy)
+    if (this.serviceAvailable !== false) {
+      try {
+        const response = await fetch(`${this.serviceUrl}/interpret`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ transcript }),
+          signal: AbortSignal.timeout(5000)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          this.serviceAvailable = true;
+          return {
+            action: data.action,
+            servo: data.servo,
+            angle: data.angle,
+            sequenceName: data.sequence_name,
+            message: data.message
+          };
+        }
+      } catch (error) {
+        console.log('Service unavailable, falling back to browser API');
+        this.serviceAvailable = false;
+      }
+    }
+
+    // Fallback to direct Gemini API (browser-based)
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
