@@ -4,12 +4,11 @@ import { AbelFace } from './components/AbelFace';
 import { ControlPanel } from './components/ControlPanel';
 import { HelpModal } from './components/HelpModal';
 import { SEQUENCES } from './constants';
-import { Usb, Terminal, HeartCrack, CircleHelp, Moon, Sun, Flower, Mic, MicOff } from 'lucide-react';
+import { Usb, Terminal, HeartCrack, CircleHelp, Flower, Mic, MicOff } from 'lucide-react';
 
 const App: React.FC = () => {
   const {
     isConnected,
-    isSimulated,
     positions,
     mood,
     logs,
@@ -17,7 +16,6 @@ const App: React.FC = () => {
     isListening,
     connect,
     disconnect,
-    toggleSimulation,
     moveServo,
     runSequence,
     stopSequence,
@@ -73,28 +71,18 @@ const App: React.FC = () => {
 
           <button
             onClick={isListening ? stopListening : startListening}
+            disabled={!isConnected}
             className={`
               p-3 rounded-full transition-colors border-2
               ${isListening
                 ? 'bg-red-950 border-red-500 text-red-200 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
-                : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}
+                : isConnected
+                  ? 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'
+                  : 'bg-neutral-900/40 border-neutral-800 opacity-40 cursor-not-allowed grayscale'}
             `}
-            title={isListening ? "Listening... (Click to stop)" : "Voice Control: Click to speak a command (e.g., 'move base to 45 degrees', 'wave', 'go home')"}
+            title={isListening ? "Listening... (Click to stop)" : isConnected ? "Voice Control: Click to speak a command (e.g., 'wave', 'pick and place', 'go home')" : "Connect robot first to use voice control"}
           >
             {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-          </button>
-
-          <button
-            onClick={toggleSimulation}
-            className={`
-              p-3 rounded-full transition-colors border-2
-              ${isSimulated 
-                ? 'bg-purple-950 border-purple-500 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.5)]' 
-                : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}
-            `}
-            title={isSimulated ? "Wake Up (Disable Sim)" : "Dream Mode (Simulate)"}
-          >
-            {isSimulated ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
           </button>
 
           <button
@@ -141,21 +129,21 @@ const App: React.FC = () => {
 
         {/* Right Column: Controls */}
         <div className="flex-1">
-          {!isConnected && !isSimulated && (
+          {!isConnected && (
             <div className="mb-6 p-6 bg-red-950/30 border-2 border-red-900 rounded-xl flex items-center gap-4 text-red-100 shadow-[0_0_15px_rgba(127,29,29,0.2)]">
               <HeartCrack className="w-8 h-8 text-red-500 flex-shrink-0" />
               <div>
                 <strong className="font-gothic text-xl tracking-wide text-red-400">DISCONNECTED</strong>
                 <p className="text-sm opacity-80 mt-1">
-                  Abel is currently offline. Connect via USB or toggle <strong>Dream Mode</strong> (Moon icon).
+                  Abel is currently offline. Click <strong>Connect Arm</strong> to start.
                 </p>
               </div>
             </div>
           )}
-          
+
           <ControlPanel
             positions={positions}
-            isConnected={isConnected || isSimulated}
+            isConnected={isConnected}
             isRunningSequence={isRunningSequence}
             onMove={moveServo}
             onSequence={handleSequence}

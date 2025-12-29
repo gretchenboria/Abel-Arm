@@ -6,7 +6,6 @@ import { INITIAL_POSITIONS, ABEL_QUOTES, SEQUENCES } from '../constants';
 
 export const useAbel = () => {
   const [isConnected, setIsConnected] = useState(false);
-  const [isSimulated, setIsSimulated] = useState(false);
   const [positions, setPositions] = useState<RobotState>(INITIAL_POSITIONS);
   const [mood, setMood] = useState<Mood>('neutral');
   const [logs, setLogs] = useState<LogMessage[]>([]);
@@ -55,17 +54,6 @@ export const useAbel = () => {
     setTimeout(() => setMood('neutral'), 3000);
   }, [addLog]);
 
-  const toggleSimulation = useCallback(() => {
-    if (isSimulated) {
-      setIsSimulated(false);
-      addLog("Waking up from the dream...", "System");
-    } else {
-      setIsSimulated(true);
-      addLog("Entering Dream Mode. Hardware bypassed.", "System");
-      speak();
-    }
-  }, [isSimulated, addLog, speak]);
-
   const connect = useCallback(async () => {
     addLog("Attempting to summon Abel...", "System");
     
@@ -97,7 +85,7 @@ export const useAbel = () => {
   }, [addLog, isConnected]);
 
   const moveServo = useCallback(async (id: ServoId, angle: number, smooth: boolean = true, debounce: boolean = false) => {
-    if (!isConnected && !isSimulated) return;
+    if (!isConnected) return;
 
     const currentAngle = positions[id];
 
@@ -138,14 +126,12 @@ export const useAbel = () => {
       } else {
         await serialService.sendCommand(id, angle);
       }
-    } else if (isSimulated) {
-      // Simulated mode - no actual hardware
     }
-  }, [isConnected, isSimulated, positions]);
+  }, [isConnected, positions]);
 
   // Return to home position (all servos at 90 degrees) with smooth deceleration
   const goHome = useCallback(async () => {
-    if (!isConnected && !isSimulated) {
+    if (!isConnected) {
       addLog("I can't move if I'm not connected...", "Abel");
       return;
     }
@@ -165,7 +151,7 @@ export const useAbel = () => {
 
     setMood('neutral');
     addLog("Home position reached.", "System");
-  }, [isConnected, isSimulated, moveServo, addLog]);
+  }, [isConnected, moveServo, addLog]);
 
   // Stop any running sequence immediately
   const stopSequence = useCallback(async () => {
@@ -181,7 +167,7 @@ export const useAbel = () => {
 
   // Execute a predefined sequence of moves
   const runSequence = useCallback(async (sequence: { servo: ServoId, angle: number, delay: number }[]) => {
-    if (!isConnected && !isSimulated) {
+    if (!isConnected) {
       addLog("I can't move if I'm not connected...", "Abel");
       return;
     }
@@ -217,7 +203,7 @@ export const useAbel = () => {
     }
 
     stopSequenceRef.current = false;
-  }, [isConnected, isSimulated, moveServo, addLog, speak, isRunningSequence, goHome]);
+  }, [isConnected, moveServo, addLog, speak, isRunningSequence, goHome]);
 
   // Voice control
   const startListening = useCallback(async () => {
@@ -290,7 +276,6 @@ export const useAbel = () => {
 
   return {
     isConnected,
-    isSimulated,
     positions,
     mood,
     logs,
@@ -298,7 +283,6 @@ export const useAbel = () => {
     isListening,
     connect,
     disconnect,
-    toggleSimulation,
     moveServo,
     runSequence,
     stopSequence,
