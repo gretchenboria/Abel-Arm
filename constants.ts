@@ -41,50 +41,50 @@ export const SEQUENCES = {
   ],
   HAND_OVER: [
     // Open gripper wide
-    { servo: ServoId.Gripper, angle: 120, delay: 500 },
+    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
     // Extend arm to pick
-    { servo: ServoId.Shoulder, angle: 60, delay: 600 },
-    { servo: ServoId.Elbow, angle: 140, delay: 800 },
-    // Close gripper
-    { servo: ServoId.Gripper, angle: 60, delay: 600 },
+    { servo: ServoId.Shoulder, angle: 60, delay: 1000 },
+    { servo: ServoId.Elbow, angle: 140, delay: 1200 },
+    // Close gripper to grab
+    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
     // Retract
-    { servo: ServoId.Elbow, angle: 90, delay: 600 },
-    { servo: ServoId.Shoulder, angle: 90, delay: 600 },
+    { servo: ServoId.Elbow, angle: 90, delay: 1000 },
+    { servo: ServoId.Shoulder, angle: 90, delay: 1000 },
     // Extend to give
-    { servo: ServoId.Shoulder, angle: 120, delay: 600 },
-    { servo: ServoId.Elbow, angle: 130, delay: 800 },
+    { servo: ServoId.Shoulder, angle: 120, delay: 1000 },
+    { servo: ServoId.Elbow, angle: 130, delay: 1200 },
     // Open gripper to release
-    { servo: ServoId.Gripper, angle: 120, delay: 600 },
+    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
     // Retract
-    { servo: ServoId.Elbow, angle: 90, delay: 500 },
-    { servo: ServoId.Shoulder, angle: 90, delay: 500 },
-    // Reset gripper to neutral
-    { servo: ServoId.Gripper, angle: 90, delay: 500 },
+    { servo: ServoId.Elbow, angle: 90, delay: 1000 },
+    { servo: ServoId.Shoulder, angle: 90, delay: 1000 },
+    // Reset gripper to neutral and STOP
+    { servo: ServoId.Gripper, angle: 90, delay: 1200 },
   ],
   PICK_PLACE: [
     // Open gripper wide
-    { servo: ServoId.Gripper, angle: 120, delay: 500 },
+    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
     // Lower wrist and extend elbow to pick position
-    { servo: ServoId.Shoulder, angle: 120, delay: 600 },
-    { servo: ServoId.Elbow, angle: 140, delay: 800 },
+    { servo: ServoId.Shoulder, angle: 120, delay: 1000 },
+    { servo: ServoId.Elbow, angle: 140, delay: 1200 },
     // Close gripper to grab
-    { servo: ServoId.Gripper, angle: 60, delay: 600 },
+    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
     // Retract elbow and lift wrist
-    { servo: ServoId.Elbow, angle: 90, delay: 600 },
-    { servo: ServoId.Shoulder, angle: 90, delay: 600 },
+    { servo: ServoId.Elbow, angle: 90, delay: 1000 },
+    { servo: ServoId.Shoulder, angle: 90, delay: 1000 },
     // Rotate base to place location
-    { servo: ServoId.Base, angle: 120, delay: 700 },
+    { servo: ServoId.Base, angle: 120, delay: 1000 },
     // Lower wrist and extend elbow to place position
-    { servo: ServoId.Shoulder, angle: 120, delay: 600 },
-    { servo: ServoId.Elbow, angle: 140, delay: 800 },
+    { servo: ServoId.Shoulder, angle: 120, delay: 1000 },
+    { servo: ServoId.Elbow, angle: 140, delay: 1200 },
     // Open gripper to release
-    { servo: ServoId.Gripper, angle: 120, delay: 600 },
+    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
     // Retract elbow and lift wrist
-    { servo: ServoId.Elbow, angle: 90, delay: 500 },
-    { servo: ServoId.Shoulder, angle: 90, delay: 500 },
+    { servo: ServoId.Elbow, angle: 90, delay: 1000 },
+    { servo: ServoId.Shoulder, angle: 90, delay: 1000 },
     // Return base to center
-    { servo: ServoId.Base, angle: 90, delay: 700 },
-    // Reset gripper to neutral
-    { servo: ServoId.Gripper, angle: 90, delay: 500 },
+    { servo: ServoId.Base, angle: 90, delay: 1000 },
+    // Reset gripper to neutral and STOP
+    { servo: ServoId.Gripper, angle: 90, delay: 1200 },
   ]
 };

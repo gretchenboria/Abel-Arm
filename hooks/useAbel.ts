@@ -115,7 +115,9 @@ export const useAbel = () => {
       const timeoutId = window.setTimeout(async () => {
         if (isConnected) {
           if (smooth) {
-            await serialService.sendCommandSmooth(id, angle, currentAngle, 400);
+            const distance = Math.abs(angle - currentAngle);
+            const duration = Math.min(800, Math.max(300, distance * 4));
+            await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
           } else {
             await serialService.sendCommand(id, angle);
           }
@@ -130,7 +132,9 @@ export const useAbel = () => {
     // Immediate execution (no debounce)
     if (isConnected) {
       if (smooth) {
-        await serialService.sendCommandSmooth(id, angle, currentAngle, 400);
+        const distance = Math.abs(angle - currentAngle);
+        const duration = Math.min(800, Math.max(300, distance * 4));
+        await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
       } else {
         await serialService.sendCommand(id, angle);
       }
