@@ -99,5 +99,26 @@ Note: The `.env` file is gitignored and should never be committed to version con
 
 * Frontend: React (v19), TypeScript, Tailwind CSS
 * Communication: Web Serial API
-* Protocol: Sends string commands (e.g., `#0P1500\n`) matching the robot's firmware expectations
-* Voice: Browser Speech Recognition API with AI command interpretation
+* Motion Control: Firmware-side trajectory interpolation with cubic easing
+* Voice: Web Speech API + Gemini function calling for natural language commands
+
+### Protocol
+
+Two command types:
+
+1. Instant move: `#<servo>P<pulse>\n`
+2. Smooth move: `#<servo>S<pulse>T<duration>\n`
+
+Smooth motion is interpolated on the ESP32 firmware for consistent timing without serial latency.
+
+## Documentation
+
+- [Voice Control Guide](VOICE_CONTROL.md) - Voice commands and Gemini API integration
+- [Firmware Documentation](FIRMWARE.md) - Motion control architecture and protocol details
+
+## Testing
+
+Validate voice control integration:
+```bash
+node test_voice_control.js
+```

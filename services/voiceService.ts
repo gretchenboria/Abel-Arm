@@ -1,5 +1,5 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
 interface VoiceCommand {
   action: 'move' | 'sequence' | 'home' | 'stop' | 'unknown' | 'multi';
@@ -19,14 +19,11 @@ const FUNCTION_DECLARATIONS = [
       properties: {
         servo: {
           type: 'integer',
-          description: 'Servo ID: 0=Base (rotation), 1=Shoulder, 2=Elbow, 3=Gripper',
-          enum: [0, 1, 2, 3]
+          description: 'Servo ID: 0=Base (rotation), 1=Shoulder, 2=Elbow, 3=Gripper'
         },
         angle: {
           type: 'integer',
-          description: 'Target angle in degrees (0-180). For gripper: 60=open, 120=closed',
-          minimum: 0,
-          maximum: 180
+          description: 'Target angle in degrees (0-180). For gripper: 60=open, 120=closed'
         }
       },
       required: ['servo', 'angle']
@@ -41,7 +38,7 @@ const FUNCTION_DECLARATIONS = [
         sequence_name: {
           type: 'string',
           description: 'Name of the sequence to run',
-          enum: ['WAVE', 'NOD_YES', 'SHAKE_NO', 'HAND_OVER']
+          enum: ['WAVE', 'NOD_YES', 'SHAKE_NO', 'HAND_OVER', 'PICK_PLACE']
         }
       },
       required: ['sequence_name']
