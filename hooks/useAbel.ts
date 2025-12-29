@@ -116,7 +116,8 @@ export const useAbel = () => {
         if (isConnected) {
           if (smooth) {
             const distance = Math.abs(angle - currentAngle);
-            const duration = Math.min(2000, Math.max(800, distance * 12));
+            // Duration scales with distance: 300ms for small moves, up to 1200ms for large moves
+            const duration = Math.min(1200, Math.max(300, distance * 5));
             await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
           } else {
             await serialService.sendCommand(id, angle);
@@ -133,7 +134,8 @@ export const useAbel = () => {
     if (isConnected) {
       if (smooth) {
         const distance = Math.abs(angle - currentAngle);
-        const duration = Math.min(2000, Math.max(800, distance * 12));
+        // Duration scales with distance: 300ms for small moves, up to 1200ms for large moves
+        const duration = Math.min(1200, Math.max(300, distance * 5));
         await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
       } else {
         await serialService.sendCommand(id, angle);

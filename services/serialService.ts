@@ -148,17 +148,13 @@ class SerialService {
     const safeAngle = Math.max(0, Math.min(180, angle));
     const pulse = this.angleToPulse(safeAngle);
 
-    // Protocol: #{servo}P{pulse}\n
+    // Protocol: #{servo}P{pulse}\n (instant move)
     const command = `#${servo}P${pulse}\n`;
 
-    console.log(`[SERIAL] Sending command: ${command.trim()} (Servo ${servo}, Angle ${safeAngle}°, Pulse ${pulse})`);
+    console.log(`[SERIAL] Instant move: Servo ${servo} -> ${safeAngle}° (${pulse}us)`);
 
     try {
       await this.writer.write(this.textEncoder.encode(command));
-      console.log('[SERIAL] Command sent successfully');
-
-      // Small delay to prevent overwhelming the ESP32
-      await new Promise(resolve => setTimeout(resolve, 30));
     } catch (e) {
       console.error("Error writing to serial port:", e);
     }
@@ -171,48 +167,28 @@ class SerialService {
     }
 
     const safeTargetAngle = Math.max(0, Math.min(180, targetAngle));
-    const safeCurrentAngle = Math.max(0, Math.min(180, currentAngle));
-
-    const deltaAngle = safeTargetAngle - safeCurrentAngle;
 
     // Skip if no movement needed
-    if (Math.abs(deltaAngle) < 1) {
+    if (Math.abs(targetAngle - currentAngle) < 1) {
       return;
     }
 
-    const startTime = Date.now();
-    // Fewer steps with longer delays for smoother motion - servo needs time to reach each position
-    const steps = Math.max(5, Math.min(10, Math.floor(Math.abs(deltaAngle) / 10)));
+    const targetPulse = this.angleToPulse(safeTargetAngle);
 
-    for (let i = 0; i <= steps; i++) {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1.0);
-      const easedProgress = this.easeInOutCubic(progress);
+    // Clamp duration to firmware limits (100-10000ms)
+    const safeDuration = Math.max(100, Math.min(10000, Math.floor(duration)));
 
-      const intermediateAngle = safeCurrentAngle + (deltaAngle * easedProgress);
-      const pulse = this.angleToPulse(intermediateAngle);
+    // Protocol: #{servo}S{pulse}T{duration}\n (smooth move)
+    // The firmware handles all interpolation with consistent timing
+    const command = `#${servo}S${targetPulse}T${safeDuration}\n`;
 
-      const command = `#${servo}P${pulse}\n`;
+    console.log(`[SERIAL] Smooth move: Servo ${servo} -> ${safeTargetAngle}° (${targetPulse}us) over ${safeDuration}ms`);
 
-      try {
-        await this.writer.write(this.textEncoder.encode(command));
-
-        // If we've reached the target, break
-        if (progress >= 1.0) break;
-
-        // Dynamic delay to maintain consistent timing
-        const nextStepTime = startTime + ((i + 1) * duration / steps);
-        const delay = Math.max(0, nextStepTime - Date.now());
-        if (delay > 0) {
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      } catch (e) {
-        console.error("Error writing to serial port:", e);
-        break;
-      }
+    try {
+      await this.writer.write(this.textEncoder.encode(command));
+    } catch (e) {
+      console.error("Error writing to serial port:", e);
     }
-
-    console.log(`[SERIAL] Smooth move complete: Servo ${servo} -> ${safeTargetAngle}°`);
   }
 }
 
