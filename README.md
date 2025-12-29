@@ -1,12 +1,28 @@
 # Abel Arm Control
 
-A web-based interface for controlling the SIYEENOVE Smart Robot Arm (ESP32-C3/Arduino). This application allows for direct control of 4 servos via the Web Serial API.
+A web-based interface for controlling the SIYEENOVE Smart Robot Arm (ESP32-C3/Arduino). Control via web GUI, voice commands, or Rust CLI.
 
-## Quick Start
+## Quick Start (Choose ONE Method)
 
-1. Connect Hardware: Plug in your Robot Arm via USB.
-2. Serve Application: You must run this app via a local web server (see below).
-3. Connect in Browser: Open the URL (e.g., `http://localhost:5173`) in Chrome or Edge.
+### Method 1: Web GUI Only (Simplest)
+1. Connect robot arm via USB
+2. Start dev server: `npm run dev`
+3. Open browser to `http://localhost:5173`
+4. Click "Connect Arm" and use manual controls
+
+### Method 2: Web GUI + Voice Service (Better Voice Recognition)
+1. Start voice service: `cd abel-voice-cli && cargo run -- serve`
+2. Start dev server: `npm run dev` (in separate terminal)
+3. Open browser to `http://localhost:5173`
+4. GUI automatically uses service for voice commands
+
+### Method 3: Rust CLI Only (Best Transcription, No Browser)
+1. Navigate: `cd abel-voice-cli`
+2. Run: `cargo run -- once` (single command)
+3. OR: `cargo run -- session` (continuous commands)
+4. Speak when prompted - uses OpenAI Whisper for accurate transcription
+
+All three methods control the same robot. Use whichever fits your workflow.
 
 ## Important: Environment Requirements
 

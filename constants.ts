@@ -40,56 +40,55 @@ export const SEQUENCES = {
     { servo: ServoId.Base, angle: 90, delay: 200 },
   ],
   PICK_PLACE: [
-    // ENGINEERED APPROACH: Gradual descent prevents slamming
-    // Tested target: Base=81°, Shoulder=9°, Elbow=84°, Gripper=86°
-    // Strategy: Break 81° shoulder drop into stages
-    // Home position: Base=90, Shoulder=90, Elbow=90, Gripper=90
+    // Tested target: Base=81°, Shoulder=9°, Elbow=84°
+    // Gripper: 60=open, 120=closed
+    // Multi-stage descent prevents slamming
 
     // === APPROACH PHASE ===
-    // 1. OPEN gripper WIDE before anything (INVERTED: high angle = open)
-    { servo: ServoId.Gripper, angle: 120, delay: 1500 },
+    // 1. OPEN gripper wide (60° = open)
+    { servo: ServoId.Gripper, angle: 60, delay: 1500 },
 
     // 2. Rotate base to pick position
     { servo: ServoId.Base, angle: 81, delay: 1500 },
 
-    // 3. Re-confirm gripper is OPEN (critical!)
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    // 3. Re-confirm gripper OPEN
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
-    // 4. First descent: shoulder 90° → 50° (gentle start, stay above block)
+    // 4. First descent: shoulder 90° → 50°
     { servo: ServoId.Shoulder, angle: 50, delay: 1800 },
 
-    // 5. Second descent: shoulder 50° → 20° (getting closer)
+    // 5. Second descent: shoulder 50° → 20°
     { servo: ServoId.Shoulder, angle: 20, delay: 1800 },
 
-    // 6. CRITICAL: Re-confirm gripper WIDE OPEN before final approach
-    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
+    // 6. Re-confirm gripper OPEN before final approach
+    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
 
-    // 7. Final approach: shoulder 20° → 9° AND elbow to 84° (precise positioning)
+    // 7. Final approach: shoulder 20° → 9° AND elbow to 84°
     { servo: ServoId.Shoulder, angle: 9, delay: 1500 },
     { servo: ServoId.Elbow, angle: 84, delay: 1500 },
 
     // === GRIP PHASE ===
-    // 8. Gentle grip: close to 90° (just touching block)
+    // 8. Gentle close to 90° (touching block)
     { servo: ServoId.Gripper, angle: 90, delay: 1200 },
 
-    // 9. Firm grip: close to 55° (INVERTED: low angle = closed tight)
-    { servo: ServoId.Gripper, angle: 55, delay: 1500 },
+    // 9. Firm grip: fully close (120° = closed)
+    { servo: ServoId.Gripper, angle: 120, delay: 1500 },
 
     // === LIFT PHASE ===
-    // 10. Start lifting: shoulder 9° → 50° (clear the table)
+    // 10. Start lifting: shoulder 9° → 50°
     { servo: ServoId.Shoulder, angle: 50, delay: 1800 },
 
-    // 11. Continue lift: shoulder 50° → 90° (safe carry height)
+    // 11. Continue lift: shoulder 50° → 90°
     { servo: ServoId.Shoulder, angle: 90, delay: 1800 },
 
-    // 12. Return elbow to neutral (bring arm closer for stability)
+    // 12. Return elbow to neutral
     { servo: ServoId.Elbow, angle: 90, delay: 1800 },
 
     // === TRANSPORT PHASE ===
-    // 13. Stabilization pause before rotation
+    // 13. Stabilization pause
     { servo: ServoId.Shoulder, angle: 90, delay: 500 },
 
-    // 14. Rotate 45° with block (81° + 45° = 126°) - slow for balance
+    // 14. Rotate 45° with block (81° + 45° = 126°)
     { servo: ServoId.Base, angle: 126, delay: 2200 },
 
     // === PLACE PHASE ===
@@ -103,26 +102,26 @@ export const SEQUENCES = {
     { servo: ServoId.Shoulder, angle: 9, delay: 1500 },
     { servo: ServoId.Elbow, angle: 84, delay: 1500 },
 
-    // 18. OPEN gripper to release (CRITICAL! INVERTED: high angle = open)
-    { servo: ServoId.Gripper, angle: 120, delay: 1500 },
+    // 18. OPEN gripper to release (60° = open)
+    { servo: ServoId.Gripper, angle: 60, delay: 1500 },
 
-    // 19. Confirm gripper fully open
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    // 19. Confirm gripper open
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
     // === RETURN HOME PHASE ===
-    // 20. Lift from placement: shoulder 9° → 50° (slow, controlled)
+    // 20. Lift from placement: shoulder 9° → 50°
     { servo: ServoId.Shoulder, angle: 50, delay: 2000 },
 
-    // 21. Continue up: shoulder 50° → 90° (slow, controlled)
+    // 21. Continue up: shoulder 50° → 90°
     { servo: ServoId.Shoulder, angle: 90, delay: 2000 },
 
-    // 22. Return elbow to neutral (bring arm in before base rotation)
+    // 22. Return elbow to neutral
     { servo: ServoId.Elbow, angle: 90, delay: 1800 },
 
-    // 23. Stabilization pause (critical for balance before base rotation)
+    // 23. Stabilization pause
     { servo: ServoId.Shoulder, angle: 90, delay: 600 },
 
-    // 24. Return base to center (SLOW - arm extended, needs stability)
+    // 24. Return base to center
     { servo: ServoId.Base, angle: 90, delay: 2500 },
 
     // 25. Final stabilization
