@@ -1,0 +1,5 @@
+{
+  "name": "Abel Arm Control",
+  "description": "A web-based controller for the SIYEENOVE Smart Robot Arm. Features an emo personality named Abel who loves My Chemical Romance. Uses Web Serial API to communicate directly with the arm from the browser, replicating the logic of the provided Python scripts.",
+  "requestFramePermissions": []
+}
