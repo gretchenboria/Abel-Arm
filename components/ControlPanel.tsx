@@ -6,7 +6,7 @@ interface ControlPanelProps {
   positions: RobotState;
   isConnected: boolean;
   isRunningSequence: boolean;
-  onMove: (id: ServoId, angle: number) => void;
+  onMove: (id: ServoId, angle: number, smooth?: boolean, debounce?: boolean) => void;
   onSequence: (name: string) => void;
   onStop: () => void;
   onHome: () => void;
@@ -120,7 +120,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnect
                     min={s.min}
                     max={s.max}
                     value={positions[s.id]}
-                    onChange={(e) => onMove(s.id, parseInt(e.target.value))}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      onMove(s.id, parseInt(target.value), true, true);
+                    }}
                     className={`
                         relative w-full h-2 appearance-none bg-transparent cursor-pointer z-10
                         [&::-webkit-slider-thumb]:appearance-none

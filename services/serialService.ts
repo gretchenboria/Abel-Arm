@@ -133,6 +133,11 @@ class SerialService {
     return Math.floor(500 + (angle / 180.0) * 2000);
   }
 
+  // Easing function for smooth motion (ease-in-out cubic)
+  private easeInOutCubic(t: number): number {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
   async sendCommand(servo: ServoId, angle: number) {
     if (!this.writer) {
       console.warn('[SERIAL] Cannot send command - no writer available');
@@ -144,7 +149,6 @@ class SerialService {
     const pulse = this.angleToPulse(safeAngle);
 
     // Protocol: #{servo}P{pulse}\n
-    // Match the Python script format (just \n, no \r)
     const command = `#${servo}P${pulse}\n`;
 
     console.log(`[SERIAL] Sending command: ${command.trim()} (Servo ${servo}, Angle ${safeAngle}°, Pulse ${pulse})`);
@@ -154,12 +158,60 @@ class SerialService {
       console.log('[SERIAL] Command sent successfully');
 
       // Small delay to prevent overwhelming the ESP32
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 30));
     } catch (e) {
       console.error("Error writing to serial port:", e);
-      // Attempt to recover writer if lost?
-      // usually requires reconnection
     }
+  }
+
+  async sendCommandSmooth(servo: ServoId, targetAngle: number, currentAngle: number, duration: number = 500) {
+    if (!this.writer) {
+      console.warn('[SERIAL] Cannot send command - no writer available');
+      return;
+    }
+
+    const safeTargetAngle = Math.max(0, Math.min(180, targetAngle));
+    const safeCurrentAngle = Math.max(0, Math.min(180, currentAngle));
+
+    const deltaAngle = safeTargetAngle - safeCurrentAngle;
+
+    // Skip if no movement needed
+    if (Math.abs(deltaAngle) < 1) {
+      return;
+    }
+
+    const startTime = Date.now();
+    const steps = Math.max(10, Math.floor(duration / 30)); // At least 10 steps, ~30ms per step
+
+    for (let i = 0; i <= steps; i++) {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1.0);
+      const easedProgress = this.easeInOutCubic(progress);
+
+      const intermediateAngle = safeCurrentAngle + (deltaAngle * easedProgress);
+      const pulse = this.angleToPulse(intermediateAngle);
+
+      const command = `#${servo}P${pulse}\n`;
+
+      try {
+        await this.writer.write(this.textEncoder.encode(command));
+
+        // If we've reached the target, break
+        if (progress >= 1.0) break;
+
+        // Dynamic delay to maintain consistent timing
+        const nextStepTime = startTime + ((i + 1) * duration / steps);
+        const delay = Math.max(0, nextStepTime - Date.now());
+        if (delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } catch (e) {
+        console.error("Error writing to serial port:", e);
+        break;
+      }
+    }
+
+    console.log(`[SERIAL] Smooth move complete: Servo ${servo} -> ${safeTargetAngle}°`);
   }
 }
 

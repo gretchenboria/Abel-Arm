@@ -13,6 +13,8 @@ export const useAbel = () => {
   const [isRunningSequence, setIsRunningSequence] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const stopSequenceRef = useRef(false);
+  const movingServos = useRef<Set<ServoId>>(new Set());
+  const moveTimeouts = useRef<Map<ServoId, number>>(new Map());
 
   const addLog = useCallback((text: string, sender: 'System' | 'Abel' = 'System') => {
     setLogs(prev => [...prev.slice(-4), { // Keep last 5 messages
@@ -94,20 +96,53 @@ export const useAbel = () => {
     }
   }, [addLog, isConnected]);
 
-  const moveServo = useCallback(async (id: ServoId, angle: number) => {
+  const moveServo = useCallback(async (id: ServoId, angle: number, smooth: boolean = true, debounce: boolean = false) => {
     if (!isConnected && !isSimulated) return;
-    
+
+    const currentAngle = positions[id];
+
     // Update local state immediately for UI responsiveness
     setPositions(prev => ({ ...prev, [id]: angle }));
-    
+
+    // Clear existing timeout for this servo if debouncing
+    if (debounce) {
+      const existingTimeout = moveTimeouts.current.get(id);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      // Set new timeout
+      const timeoutId = window.setTimeout(async () => {
+        if (isConnected) {
+          if (smooth) {
+            const distance = Math.abs(angle - currentAngle);
+            const duration = Math.min(800, Math.max(300, distance * 5));
+            await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
+          } else {
+            await serialService.sendCommand(id, angle);
+          }
+        }
+        moveTimeouts.current.delete(id);
+      }, 150); // 150ms debounce
+
+      moveTimeouts.current.set(id, timeoutId);
+      return;
+    }
+
+    // Immediate execution (no debounce)
     if (isConnected) {
-      // Send to hardware
-      await serialService.sendCommand(id, angle);
+      if (smooth) {
+        const distance = Math.abs(angle - currentAngle);
+        const duration = Math.min(800, Math.max(300, distance * 5));
+        await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
+      } else {
+        await serialService.sendCommand(id, angle);
+      }
     } else if (isSimulated) {
       // Fake delay for realism
-      // await new Promise(r => setTimeout(r, 10)); 
+      // await new Promise(r => setTimeout(r, 10));
     }
-  }, [isConnected, isSimulated]);
+  }, [isConnected, isSimulated, positions]);
 
   // Return to home position (all servos at 90 degrees) with smooth deceleration
   const goHome = useCallback(async () => {
@@ -119,15 +154,15 @@ export const useAbel = () => {
     addLog("Returning home...", "System");
     setMood('working');
 
-    // Move all servos to center position with progressive slowdown
-    await moveServo(ServoId.Base, 90);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    await moveServo(ServoId.Shoulder, 90);
+    // Move all servos to center position smoothly in sequence
+    await moveServo(ServoId.Gripper, 90, true);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await moveServo(ServoId.Elbow, 90, true);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await moveServo(ServoId.Shoulder, 90, true);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await moveServo(ServoId.Base, 90, true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    await moveServo(ServoId.Elbow, 90);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    await moveServo(ServoId.Gripper, 90);
-    await new Promise(resolve => setTimeout(resolve, 700));
 
     setMood('neutral');
     addLog("Home position reached.", "Abel");
