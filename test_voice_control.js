@@ -5,8 +5,15 @@
  * Run with: node test_voice_control.js
  */
 
-const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
+// Load API key from environment variable
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+
+if (!GEMINI_API_KEY) {
+  console.error('ERROR: GEMINI_API_KEY environment variable not set');
+  console.error('Usage: GEMINI_API_KEY=your_key node test_voice_control.js');
+  process.exit(1);
+}
 
 const FUNCTION_DECLARATIONS = [
   {
