@@ -41,18 +41,18 @@ export const SEQUENCES = {
   ],
   PICK_PLACE: [
     // Tested target: Base=81°, Shoulder=9°, Elbow=84°
-    // Gripper: 60=open, 120=closed
+    // Gripper: 120=open, 60=closed
     // Multi-stage descent prevents slamming
 
     // === APPROACH PHASE ===
-    // 1. OPEN gripper wide (60° = open)
-    { servo: ServoId.Gripper, angle: 60, delay: 2000 },
+    // 1. OPEN gripper wide (120° = open)
+    { servo: ServoId.Gripper, angle: 120, delay: 2000 },
 
     // 2. Rotate base to pick position
     { servo: ServoId.Base, angle: 81, delay: 2200 },
 
     // 3. Re-confirm gripper OPEN
-    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
+    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
 
     // 4. First descent: shoulder 90° → 50°
     { servo: ServoId.Shoulder, angle: 50, delay: 2200 },
@@ -61,7 +61,7 @@ export const SEQUENCES = {
     { servo: ServoId.Shoulder, angle: 20, delay: 2200 },
 
     // 6. Re-confirm gripper OPEN before final approach
-    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
+    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
 
     // 7. Final approach: shoulder 20° → 9° AND elbow to 84°
     { servo: ServoId.Shoulder, angle: 9, delay: 2000 },
@@ -71,18 +71,18 @@ export const SEQUENCES = {
     // 8. Gentle close to 90° (touching block)
     { servo: ServoId.Gripper, angle: 90, delay: 1500 },
 
-    // 9. Firm grip: fully close (120° = closed)
-    { servo: ServoId.Gripper, angle: 120, delay: 2000 },
+    // 9. Firm grip: fully close (60° = closed)
+    { servo: ServoId.Gripper, angle: 60, delay: 2000 },
 
     // === LIFT PHASE ===
     // 10. Hold grip firmly closed
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
     // 11. Start lifting: shoulder 9° → 50°
     { servo: ServoId.Shoulder, angle: 50, delay: 2500 },
 
     // 12. Maintain closed grip during lift
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
     // 13. Continue lift: shoulder 50° → 90°
     { servo: ServoId.Shoulder, angle: 90, delay: 2500 },
@@ -91,7 +91,7 @@ export const SEQUENCES = {
     { servo: ServoId.Elbow, angle: 90, delay: 2200 },
 
     // 15. Confirm grip still closed
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
     // === TRANSPORT PHASE ===
     // 16. Stabilization pause
@@ -101,7 +101,7 @@ export const SEQUENCES = {
     { servo: ServoId.Base, angle: 126, delay: 2500 },
 
     // 18. Maintain closed grip during rotation
-    { servo: ServoId.Gripper, angle: 120, delay: 800 },
+    { servo: ServoId.Gripper, angle: 60, delay: 800 },
 
     // === PLACE PHASE ===
     // 19. First descent: shoulder 90° → 50°
@@ -114,11 +114,11 @@ export const SEQUENCES = {
     { servo: ServoId.Shoulder, angle: 9, delay: 2000 },
     { servo: ServoId.Elbow, angle: 84, delay: 2000 },
 
-    // 22. OPEN gripper to release (60° = open)
-    { servo: ServoId.Gripper, angle: 60, delay: 2000 },
+    // 22. OPEN gripper to release (120° = open)
+    { servo: ServoId.Gripper, angle: 120, delay: 2000 },
 
     // 23. Confirm gripper open
-    { servo: ServoId.Gripper, angle: 60, delay: 1000 },
+    { servo: ServoId.Gripper, angle: 120, delay: 1000 },
 
     // === RETURN HOME PHASE ===
     // 24. Lift from placement: shoulder 9° → 50°
