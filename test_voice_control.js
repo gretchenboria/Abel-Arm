@@ -2,7 +2,9 @@
  * Voice Control & Gemini API Test Script
  * Tests the voice command interpretation system
  *
- * Run with: node test_voice_control.js
+ * Usage: GEMINI_API_KEY=your_key_here node test_voice_control.js
+ *
+ * SECURITY: API key is loaded from environment variable, never hardcoded.
  */
 
 // Load API key from environment variable

@@ -62,10 +62,12 @@ The system uses 4 function declarations:
 
 ## Testing
 
-Run the test suite:
+Run the test suite with your API key:
 ```bash
-node test_voice_control.js
+GEMINI_API_KEY=your_key_here node test_voice_control.js
 ```
+
+IMPORTANT: Never commit API keys to version control. Use environment variables only.
 
 This validates:
 - API connectivity
