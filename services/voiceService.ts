@@ -1,12 +1,69 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 interface VoiceCommand {
-  action: 'move' | 'sequence' | 'home' | 'stop' | 'unknown';
+  action: 'move' | 'sequence' | 'home' | 'stop' | 'unknown' | 'multi';
   servo?: number;
   angle?: number;
   sequenceName?: string;
+  commands?: VoiceCommand[];
+  message?: string;
 }
+
+const FUNCTION_DECLARATIONS = [
+  {
+    name: 'move_servo',
+    description: 'Move a specific servo to a target angle. Use this for precise control of individual joints.',
+    parameters: {
+      type: 'object',
+      properties: {
+        servo: {
+          type: 'integer',
+          description: 'Servo ID: 0=Base (rotation), 1=Shoulder, 2=Elbow, 3=Gripper',
+          enum: [0, 1, 2, 3]
+        },
+        angle: {
+          type: 'integer',
+          description: 'Target angle in degrees (0-180). For gripper: 60=open, 120=closed',
+          minimum: 0,
+          maximum: 180
+        }
+      },
+      required: ['servo', 'angle']
+    }
+  },
+  {
+    name: 'run_sequence',
+    description: 'Execute a pre-programmed movement sequence.',
+    parameters: {
+      type: 'object',
+      properties: {
+        sequence_name: {
+          type: 'string',
+          description: 'Name of the sequence to run',
+          enum: ['WAVE', 'NOD_YES', 'SHAKE_NO', 'HAND_OVER']
+        }
+      },
+      required: ['sequence_name']
+    }
+  },
+  {
+    name: 'go_home',
+    description: 'Return all servos to the home position (90 degrees center).',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
+    name: 'stop',
+    description: 'Emergency stop. Halt any running sequence and return to home.',
+    parameters: {
+      type: 'object',
+      properties: {}
+    }
+  }
+];
 
 class VoiceService {
   private recognition: any = null;
@@ -56,40 +113,78 @@ class VoiceService {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are a robot arm command interpreter. Parse the following voice command and return ONLY a JSON object with no markdown formatting or additional text.
-
-The robot has:
-- Servo 0: Base (rotation)
-- Servo 1: Shoulder
-- Servo 2: Elbow
-- Servo 3: Gripper
-- Sequences: wave, nod yes, shake no, hand over
-
-Return JSON format:
-{"action": "move|sequence|home|stop|unknown", "servo": 0-3, "angle": 0-180, "sequenceName": "WAVE|NOD_YES|SHAKE_NO|HAND_OVER"}
-
-Examples:
-"move base to 90 degrees" -> {"action":"move","servo":0,"angle":90}
-"wave" -> {"action":"sequence","sequenceName":"WAVE"}
-"go home" -> {"action":"home"}
-"stop" -> {"action":"stop"}
-
-Command: "${transcript}"`
+              text: `Robot control command: "${transcript}"\n\nInterpret this natural language command and call the appropriate function(s). You can chain multiple function calls for complex commands.`
             }]
+          }],
+          tools: [{
+            function_declarations: FUNCTION_DECLARATIONS
           }]
         })
       });
 
       const data = await response.json();
-      const text = data.candidates[0].content.parts[0].text.trim();
 
-      // Remove markdown code blocks if present
-      const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      if (!data.candidates || !data.candidates[0]) {
+        console.error('No candidates in response:', data);
+        return { action: 'unknown', message: 'No response from AI' };
+      }
 
-      return JSON.parse(jsonText);
+      const candidate = data.candidates[0];
+
+      // Check if LLM wants to call functions
+      if (candidate.content?.parts?.[0]?.functionCall) {
+        const functionCall = candidate.content.parts[0].functionCall;
+        return this.convertFunctionCallToCommand(functionCall);
+      }
+
+      // Check for multiple function calls
+      if (candidate.content?.parts && candidate.content.parts.length > 1) {
+        const commands: VoiceCommand[] = [];
+        for (const part of candidate.content.parts) {
+          if (part.functionCall) {
+            commands.push(this.convertFunctionCallToCommand(part.functionCall));
+          }
+        }
+        if (commands.length > 0) {
+          return { action: 'multi', commands };
+        }
+      }
+
+      // Fallback: LLM responded with text instead of function call
+      const text = candidate.content?.parts?.[0]?.text;
+      if (text) {
+        return { action: 'unknown', message: text };
+      }
+
+      return { action: 'unknown', message: 'Could not interpret command' };
     } catch (error) {
       console.error('Failed to interpret command:', error);
-      return { action: 'unknown' };
+      return { action: 'unknown', message: 'Error processing command' };
+    }
+  }
+
+  private convertFunctionCallToCommand(functionCall: any): VoiceCommand {
+    const name = functionCall.name;
+    const args = functionCall.args || {};
+
+    switch (name) {
+      case 'move_servo':
+        return {
+          action: 'move',
+          servo: args.servo,
+          angle: args.angle
+        };
+      case 'run_sequence':
+        return {
+          action: 'sequence',
+          sequenceName: args.sequence_name
+        };
+      case 'go_home':
+        return { action: 'home' };
+      case 'stop':
+        return { action: 'stop' };
+      default:
+        return { action: 'unknown', message: `Unknown function: ${name}` };
     }
   }
 

@@ -238,28 +238,45 @@ export const useAbel = () => {
 
       const command = await voiceService.interpretCommand(transcript);
 
-      switch (command.action) {
-        case 'move':
-          if (command.servo !== undefined && command.angle !== undefined) {
-            await moveServo(command.servo, command.angle);
-          }
-          break;
-        case 'sequence':
-          if (command.sequenceName) {
-            const seq = (SEQUENCES as any)[command.sequenceName];
-            if (seq) {
-              await runSequence(seq);
+      // Handle multi-command
+      if (command.action === 'multi' && command.commands) {
+        for (const cmd of command.commands) {
+          await executeCommand(cmd);
+        }
+      } else {
+        await executeCommand(command);
+      }
+
+      async function executeCommand(cmd: typeof command) {
+        switch (cmd.action) {
+          case 'move':
+            if (cmd.servo !== undefined && cmd.angle !== undefined) {
+              addLog(`Moving servo ${cmd.servo} to ${cmd.angle}°`, "System");
+              await moveServo(cmd.servo, cmd.angle, true, false);
             }
-          }
-          break;
-        case 'home':
-          await goHome();
-          break;
-        case 'stop':
-          await stopSequence();
-          break;
-        default:
-          addLog("Command not recognized.", "System");
+            break;
+          case 'sequence':
+            if (cmd.sequenceName) {
+              const seq = (SEQUENCES as any)[cmd.sequenceName];
+              if (seq) {
+                addLog(`Running sequence: ${cmd.sequenceName}`, "System");
+                await runSequence(seq);
+              }
+            }
+            break;
+          case 'home':
+            await goHome();
+            break;
+          case 'stop':
+            await stopSequence();
+            break;
+          default:
+            if (cmd.message) {
+              addLog(cmd.message, "Abel");
+            } else {
+              addLog("Command not recognized.", "System");
+            }
+        }
       }
     } catch (error: any) {
       addLog(`Voice error: ${error.message}`, "System");
