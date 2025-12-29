@@ -76,8 +76,8 @@ Use this Python API:
 import serial
 import time
 
-# Initialize serial connection
-ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+# Initialize serial connection (macOS)
+ser = serial.Serial('/dev/cu.usbserial-140', 115200, timeout=1)
 time.sleep(2)
 
 def move_servo(servo_id, angle, duration_ms=800):
