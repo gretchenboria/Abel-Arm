@@ -38,7 +38,7 @@ const FUNCTION_DECLARATIONS = [
         sequence_name: {
           type: 'string',
           description: 'Name of the sequence to run',
-          enum: ['WAVE', 'NOD_YES', 'SHAKE_NO', 'HAND_OVER', 'PICK_PLACE']
+          enum: ['WAVE', 'NOD_YES', 'SHAKE_NO', 'PICK_PLACE']
         }
       },
       required: ['sequence_name']

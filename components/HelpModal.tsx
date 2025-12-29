@@ -67,7 +67,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <p>"rotate shoulder to 120"</p>
               <p>"open gripper"</p>
               <p>"wave" / "nod yes" / "shake no"</p>
-              <p>"hand over" / "pick and place"</p>
+              <p>"pick and place"</p>
               <p>"go home" / "stop"</p>
             </div>
           </section>

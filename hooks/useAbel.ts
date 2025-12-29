@@ -153,29 +153,29 @@ export const useAbel = () => {
     addLog("Returning home...", "System");
     setMood('working');
 
-    // Move all servos to center position smoothly in sequence
+    // Move all servos to center position with proper delays for motion completion
     await moveServo(ServoId.Gripper, 90, true);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await moveServo(ServoId.Elbow, 90, true);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await moveServo(ServoId.Shoulder, 90, true);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await moveServo(ServoId.Base, 90, true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     setMood('neutral');
-    addLog("Home position reached.", "Abel");
+    addLog("Home position reached.", "System");
   }, [isConnected, isSimulated, moveServo, addLog]);
 
-  // Stop any running sequence and return home
+  // Stop any running sequence immediately
   const stopSequence = useCallback(async () => {
     stopSequenceRef.current = true;
     setIsRunningSequence(false);
     setMood('neutral');
-    addLog("Stopping...", "System");
+    addLog("Emergency stop activated.", "System");
 
-    // Return to home position
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait a moment then go home
+    await new Promise(resolve => setTimeout(resolve, 500));
     await goHome();
   }, [addLog, goHome]);
 
@@ -212,10 +212,8 @@ export const useAbel = () => {
 
     // Only speak if not stopped
     if (!stopSequenceRef.current) {
-      speak(); // Say something emo after finishing
-      // Return home after sequence completes
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await goHome();
+      addLog("Sequence complete.", "System");
+      speak();
     }
 
     stopSequenceRef.current = false;

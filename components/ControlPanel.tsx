@@ -68,7 +68,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnect
             <span className="w-2 h-2 bg-red-600 rounded-full"></span>
             Sequences
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <button onClick={() => onSequence('WAVE')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
             <Hand className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Wave</span>
@@ -82,11 +82,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnect
             <button onClick={() => onSequence('SHAKE_NO')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
             <XOctagon className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Shake No</span>
-            </button>
-
-            <button onClick={() => onSequence('HAND_OVER')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
-            <Hand className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Hand Over</span>
             </button>
 
             <button onClick={() => onSequence('PICK_PLACE')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
