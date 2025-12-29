@@ -139,50 +139,24 @@ class SerialService {
   }
 
   async sendCommand(servo: ServoId, angle: number) {
-    if (!this.writer) {
-      console.warn('[SERIAL] Cannot send command - no writer available');
-      return;
-    }
-
-    // Safety clamping
-    const safeAngle = Math.max(0, Math.min(180, angle));
-    const pulse = this.angleToPulse(safeAngle);
-
-    // Protocol: #{servo}P{pulse}\n (instant move)
-    const command = `#${servo}P${pulse}\n`;
-
-    console.log(`[SERIAL] Instant move: Servo ${servo} -> ${safeAngle}° (${pulse}us)`);
-
-    try {
-      await this.writer.write(this.textEncoder.encode(command));
-    } catch (e) {
-      console.error("Error writing to serial port:", e);
-    }
+    // Instant move - use minimum duration for immediate response
+    await this.sendCommandSmooth(servo, angle, angle, 100);
   }
 
-  async sendCommandSmooth(servo: ServoId, targetAngle: number, currentAngle: number, duration: number = 600) {
+  async sendCommandSmooth(servo: ServoId, targetAngle: number, currentAngle: number, duration: number = 400) {
     if (!this.writer) {
       console.warn('[SERIAL] Cannot send command - no writer available');
       return;
     }
 
-    const safeTargetAngle = Math.max(0, Math.min(180, targetAngle));
-
-    // Skip if no movement needed
-    if (Math.abs(targetAngle - currentAngle) < 1) {
-      return;
-    }
-
-    const targetPulse = this.angleToPulse(safeTargetAngle);
-
-    // Clamp duration to firmware limits (100-10000ms)
+    const safeAngle = Math.max(0, Math.min(180, targetAngle));
     const safeDuration = Math.max(100, Math.min(10000, Math.floor(duration)));
 
-    // Protocol: #{servo}S{pulse}T{duration}\n (smooth move)
-    // The firmware handles all interpolation with consistent timing
-    const command = `#${servo}S${targetPulse}T${safeDuration}\n`;
+    // Protocol: #<servo>M<angle>T<duration>
+    // Firmware v3.0 with S-curve acceleration profile
+    const command = `#${servo}M${safeAngle}T${safeDuration}\n`;
 
-    console.log(`[SERIAL] Smooth move: Servo ${servo} -> ${safeTargetAngle}° (${targetPulse}us) over ${safeDuration}ms`);
+    console.log(`[SERIAL] S-curve move: Servo ${servo} -> ${safeAngle}° over ${safeDuration}ms`);
 
     try {
       await this.writer.write(this.textEncoder.encode(command));

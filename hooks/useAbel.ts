@@ -115,16 +115,13 @@ export const useAbel = () => {
       const timeoutId = window.setTimeout(async () => {
         if (isConnected) {
           if (smooth) {
-            const distance = Math.abs(angle - currentAngle);
-            // Duration scales with distance: 300ms for small moves, up to 1200ms for large moves
-            const duration = Math.min(1200, Math.max(300, distance * 5));
-            await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
+            await serialService.sendCommandSmooth(id, angle, currentAngle, 400);
           } else {
             await serialService.sendCommand(id, angle);
           }
         }
         moveTimeouts.current.delete(id);
-      }, 200); // 200ms debounce
+      }, 100); // 100ms debounce
 
       moveTimeouts.current.set(id, timeoutId);
       return;
@@ -133,16 +130,12 @@ export const useAbel = () => {
     // Immediate execution (no debounce)
     if (isConnected) {
       if (smooth) {
-        const distance = Math.abs(angle - currentAngle);
-        // Duration scales with distance: 300ms for small moves, up to 1200ms for large moves
-        const duration = Math.min(1200, Math.max(300, distance * 5));
-        await serialService.sendCommandSmooth(id, angle, currentAngle, duration);
+        await serialService.sendCommandSmooth(id, angle, currentAngle, 400);
       } else {
         await serialService.sendCommand(id, angle);
       }
     } else if (isSimulated) {
-      // Fake delay for realism
-      // await new Promise(r => setTimeout(r, 10));
+      // Simulated mode - no actual hardware
     }
   }, [isConnected, isSimulated, positions]);
 
