@@ -54,6 +54,32 @@ enum Commands {
         /// Path to Python script
         script: PathBuf,
     },
+
+    /// Calibrate servo ranges interactively
+    Calibrate {
+        /// Servo ID to calibrate (0-3)
+        #[arg(short, long)]
+        servo: Option<u8>,
+    },
+
+    /// Test smooth motion with different durations
+    Smooth {
+        /// Servo ID to test (0-3)
+        #[arg(short, long, default_value = "0")]
+        servo: u8,
+
+        /// Start angle
+        #[arg(long, default_value = "45")]
+        from: u8,
+
+        /// End angle
+        #[arg(long, default_value = "135")]
+        to: u8,
+
+        /// Duration in milliseconds
+        #[arg(short, long, default_value = "1000")]
+        duration: u16,
+    },
 }
 
 #[tokio::main]
@@ -74,6 +100,12 @@ async fn main() -> Result<()> {
         }
         Commands::Run { script } => {
             executor::run_script(&script).await?;
+        }
+        Commands::Calibrate { servo } => {
+            run_calibration(servo).await?;
+        }
+        Commands::Smooth { servo, from, to, duration } => {
+            run_smooth_test(servo, from, to, duration).await?;
         }
     }
 
@@ -236,6 +268,127 @@ async fn run_once(save_path: Option<PathBuf>, tts_enabled: bool) -> Result<()> {
             }
         }
     }
+
+    Ok(())
+}
+
+async fn run_calibration(servo_id: Option<u8>) -> Result<()> {
+    use dialoguer::{Input, Select};
+    use std::io::Write;
+    use std::time::Duration;
+
+    println!("{}", "🎯 Servo Calibration Tool".bright_cyan().bold());
+    println!();
+
+    let servo = match servo_id {
+        Some(id) if id <= 3 => id,
+        Some(_) => anyhow::bail!("Servo ID must be 0-3"),
+        None => {
+            let servos = vec!["Base (0)", "Shoulder (1)", "Elbow (2)", "Gripper (3)"];
+            let selection = Select::new()
+                .with_prompt("Select servo to calibrate")
+                .items(&servos)
+                .interact()?;
+            selection as u8
+        }
+    };
+
+    let servo_names = ["Base", "Shoulder", "Elbow", "Gripper"];
+    println!("{}: {}", "Calibrating".green(), servo_names[servo as usize].bright_white());
+    println!();
+
+    let port = serialport::new("/dev/cu.usbserial-140", 115200)
+        .timeout(Duration::from_secs(2))
+        .open()?;
+
+    let mut port = port;
+    std::thread::sleep(Duration::from_millis(2000));
+
+    println!("{}", "Testing range 0-180 degrees...".dimmed());
+    println!();
+
+    loop {
+        let angle: String = Input::new()
+            .with_prompt("Enter angle (0-180) or 'q' to quit")
+            .interact_text()?;
+
+        if angle.trim().to_lowercase() == "q" {
+            break;
+        }
+
+        let angle: u8 = match angle.trim().parse() {
+            Ok(a) if a <= 180 => a,
+            _ => {
+                println!("{}", "Invalid angle. Must be 0-180.".red());
+                continue;
+            }
+        };
+
+        let command = format!("#{servo}M{angle}T800\n");
+        port.write_all(command.as_bytes())?;
+        port.flush()?;
+
+        println!("{} Servo {} → {}°", "➜".cyan(), servo, angle);
+        std::thread::sleep(Duration::from_millis(900));
+    }
+
+    println!();
+    println!("{}", "✓ Calibration complete".green());
+
+    Ok(())
+}
+
+async fn run_smooth_test(servo: u8, from: u8, to: u8, duration: u16) -> Result<()> {
+    use std::io::Write;
+    use std::time::Duration;
+
+    if servo > 3 {
+        anyhow::bail!("Servo ID must be 0-3");
+    }
+
+    println!("{}", "⚡ Smooth Motion Test".bright_cyan().bold());
+    println!();
+
+    let servo_names = ["Base", "Shoulder", "Elbow", "Gripper"];
+    println!("{}: {}", "Servo".bright_white(), servo_names[servo as usize]);
+    println!("{}: {}° → {}°", "Range".bright_white(), from, to);
+    println!("{}: {}ms", "Duration".bright_white(), duration);
+    println!();
+
+    let port = serialport::new("/dev/cu.usbserial-140", 115200)
+        .timeout(Duration::from_secs(2))
+        .open()?;
+
+    let mut port = port;
+    std::thread::sleep(Duration::from_millis(2000));
+
+    println!("{}", "Running test...".cyan());
+
+    let command = format!("#{servo}M{from}T{duration}\n");
+    port.write_all(command.as_bytes())?;
+    port.flush()?;
+    println!("{} Moving to {}°", "➜".cyan(), from);
+    std::thread::sleep(Duration::from_millis((duration + 200) as u64));
+
+    std::thread::sleep(Duration::from_millis(500));
+
+    let command = format!("#{servo}M{to}T{duration}\n");
+    port.write_all(command.as_bytes())?;
+    port.flush()?;
+    println!("{} Moving to {}°", "➜".cyan(), to);
+    std::thread::sleep(Duration::from_millis((duration + 200) as u64));
+
+    std::thread::sleep(Duration::from_millis(500));
+
+    let mid = (from + to) / 2;
+    let command = format!("#{servo}M{mid}T{duration}\n");
+    port.write_all(command.as_bytes())?;
+    port.flush()?;
+    println!("{} Returning to center {}°", "➜".cyan(), mid);
+    std::thread::sleep(Duration::from_millis((duration + 200) as u64));
+
+    println!();
+    println!("{}", "✓ Smooth motion test complete".green());
 
     Ok(())
 }

@@ -132,6 +132,37 @@ Execute a previously generated script:
 cargo run -- run scripts/cmd_001.py
 ```
 
+### Calibrate Servos
+
+Interactive servo calibration to find min/max angles:
+
+```bash
+# Calibrate specific servo:
+cargo run -- calibrate --servo 0
+
+# Interactive selection:
+cargo run -- calibrate
+```
+
+Enter angles 0-180 to test servo range. Type 'q' to quit.
+
+### Test Smooth Motion
+
+Test servo smoothing with different durations:
+
+```bash
+# Default test (Base servo, 45-135°, 1000ms):
+cargo run -- smooth
+
+# Custom parameters:
+cargo run -- smooth --servo 1 --from 30 --to 150 --duration 2000
+
+# Quick test:
+cargo run -- smooth -s 2 --from 60 --to 120 -d 500
+```
+
+Tests back-and-forth motion to verify smooth acceleration/deceleration.
+
 ## Example Commands
 
 Try saying:
