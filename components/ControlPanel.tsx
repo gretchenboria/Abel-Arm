@@ -1,15 +1,18 @@
 import React from 'react';
 import { ServoId, RobotState } from '../types';
-import { Sliders, Hand, Activity, XOctagon } from 'lucide-react';
+import { Sliders, Hand, Activity, XOctagon, StopCircle, Home } from 'lucide-react';
 
 interface ControlPanelProps {
   positions: RobotState;
   isConnected: boolean;
+  isRunningSequence: boolean;
   onMove: (id: ServoId, angle: number) => void;
   onSequence: (name: string) => void;
+  onStop: () => void;
+  onHome: () => void;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnected, onMove, onSequence }) => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnected, isRunningSequence, onMove, onSequence, onStop, onHome }) => {
   
   const sliders = [
     { id: ServoId.Base, label: "Base (Rotation)", min: 0, max: 180 },
@@ -28,6 +31,37 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnect
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
+      {/* Control Buttons */}
+      <div className="flex gap-4">
+        <button
+          onClick={onHome}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all border-2 shadow-xl uppercase tracking-widest text-sm
+            ${isConnected && !isRunningSequence
+              ? 'bg-neutral-800 border-neutral-600 text-white hover:border-blue-500 hover:bg-neutral-700 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+              : 'bg-neutral-900/40 border-neutral-800 opacity-40 cursor-not-allowed grayscale'}
+          `}
+          disabled={!isConnected || isRunningSequence}
+        >
+          <Home className="w-5 h-5" />
+          Home
+        </button>
+
+        <button
+          onClick={onStop}
+          className={`
+            flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold transition-all border-2 shadow-xl uppercase tracking-widest text-sm
+            ${isRunningSequence
+              ? 'bg-red-950 border-red-600 text-red-200 hover:bg-red-900 shadow-[0_0_15px_rgba(220,38,38,0.4)] animate-pulse'
+              : 'bg-neutral-900/40 border-neutral-800 opacity-40 cursor-not-allowed grayscale'}
+          `}
+          disabled={!isRunningSequence}
+        >
+          <StopCircle className="w-5 h-5" />
+          Stop
+        </button>
+      </div>
+
       {/* Quick Actions */}
       <div>
         <h3 className="text-neutral-400 font-bold uppercase tracking-widest text-xs mb-3 ml-1 flex items-center gap-2">
@@ -35,23 +69,23 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ positions, isConnect
             Sequences
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onClick={() => onSequence('WAVE')} className={btnClass(isConnected)} disabled={!isConnected}>
-            <Hand className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected ? 'text-white' : 'text-neutral-600'}`} />
+            <button onClick={() => onSequence('WAVE')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
+            <Hand className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Wave</span>
             </button>
-            
-            <button onClick={() => onSequence('NOD_YES')} className={btnClass(isConnected)} disabled={!isConnected}>
-            <Activity className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected ? 'text-white' : 'text-neutral-600'}`} />
+
+            <button onClick={() => onSequence('NOD_YES')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
+            <Activity className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Nod Yes</span>
             </button>
 
-            <button onClick={() => onSequence('SHAKE_NO')} className={btnClass(isConnected)} disabled={!isConnected}>
-            <XOctagon className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected ? 'text-white' : 'text-neutral-600'}`} />
+            <button onClick={() => onSequence('SHAKE_NO')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
+            <XOctagon className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Shake No</span>
             </button>
 
-            <button onClick={() => onSequence('HAND_OVER')} className={btnClass(isConnected)} disabled={!isConnected}>
-            <Sliders className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected ? 'text-white' : 'text-neutral-600'}`} />
+            <button onClick={() => onSequence('HAND_OVER')} className={btnClass(isConnected && !isRunningSequence)} disabled={!isConnected || isRunningSequence}>
+            <Sliders className={`w-6 h-6 group-hover:text-red-500 transition-colors ${isConnected && !isRunningSequence ? 'text-white' : 'text-neutral-600'}`} />
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-300 group-hover:text-white">Hand Over</span>
             </button>
         </div>

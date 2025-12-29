@@ -4,20 +4,26 @@ import { AbelFace } from './components/AbelFace';
 import { ControlPanel } from './components/ControlPanel';
 import { HelpModal } from './components/HelpModal';
 import { SEQUENCES } from './constants';
-import { Usb, Terminal, HeartCrack, CircleHelp, Moon, Sun, Flower } from 'lucide-react';
+import { Usb, Terminal, HeartCrack, CircleHelp, Moon, Sun, Flower, Mic, MicOff } from 'lucide-react';
 
 const App: React.FC = () => {
-  const { 
+  const {
     isConnected,
     isSimulated,
-    positions, 
-    mood, 
-    logs, 
-    connect, 
-    disconnect, 
+    positions,
+    mood,
+    logs,
+    isRunningSequence,
+    isListening,
+    connect,
+    disconnect,
     toggleSimulation,
-    moveServo, 
-    runSequence 
+    moveServo,
+    runSequence,
+    stopSequence,
+    goHome,
+    startListening,
+    stopListening
   } = useAbel();
 
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -60,9 +66,22 @@ const App: React.FC = () => {
           <button
             onClick={() => setIsHelpOpen(true)}
             className="p-3 rounded-full text-neutral-400 hover:text-white hover:bg-red-950/50 transition-colors border border-transparent hover:border-red-900"
-            title="Liner Notes (Help)"
+            title="Help"
           >
             <CircleHelp className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={isListening ? stopListening : startListening}
+            className={`
+              p-3 rounded-full transition-colors border-2
+              ${isListening
+                ? 'bg-red-950 border-red-500 text-red-200 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
+                : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-500'}
+            `}
+            title={isListening ? "Stop Listening" : "Voice Control"}
+          >
+            {isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
           </button>
 
           <button
@@ -134,11 +153,14 @@ const App: React.FC = () => {
             </div>
           )}
           
-          <ControlPanel 
-            positions={positions} 
-            isConnected={isConnected || isSimulated} 
-            onMove={moveServo} 
+          <ControlPanel
+            positions={positions}
+            isConnected={isConnected || isSimulated}
+            isRunningSequence={isRunningSequence}
+            onMove={moveServo}
             onSequence={handleSequence}
+            onStop={stopSequence}
+            onHome={goHome}
           />
         </div>
 

@@ -18,44 +18,64 @@ class SerialService {
     // 1. Diagnostic Check: Environment
     if (!("serial" in navigator)) {
       if (!window.isSecureContext) {
-        return { 
-          success: false, 
-          error: "Insecure Context. Web Serial requires HTTPS or localhost." 
+        return {
+          success: false,
+          error: "Insecure Context. Web Serial requires HTTPS or localhost."
         };
       }
-      return { 
-        success: false, 
-        error: "Browser unsupported. Please use Chrome, Edge, or Opera." 
+      return {
+        success: false,
+        error: "Browser unsupported. Please use Chrome, Edge, or Opera."
       };
     }
 
     const serial = (navigator as any).serial;
 
     try {
+      // Clean up any existing connection first
+      if (this.port) {
+        console.log('[SERIAL] Cleaning up existing connection...');
+        await this.disconnect();
+      }
+
       // 2. Request the device (opens the browser dialog)
       // filters: [] allows all standard serial devices
-      this.port = await serial.requestDevice({ filters: [] });
-      
-      // 3. Open the port
-      // standard ESP32/Arduino config: 115200, 8, 1, None
-      await this.port.open({ 
-        baudRate: 115200,
-        dataBits: 8,
-        stopBits: 1,
-        parity: "none",
-        flowControl: "none"
-      }); 
+      this.port = await serial.requestPort({ filters: [] });
+
+      console.log('[SERIAL] Port selected, opening connection...');
+
+      // 3. Open the port (check if already open first)
+      if (!this.port.readable || !this.port.writable) {
+        // standard ESP32/Arduino config: 115200, 8, 1, None
+        await this.port.open({
+          baudRate: 115200,
+          dataBits: 8,
+          stopBits: 1,
+          parity: "none",
+          flowControl: "none"
+        });
+      } else {
+        console.log('[SERIAL] Port already open, reusing connection');
+      }
+
+      console.log('[SERIAL] Port opened successfully');
 
       // 4. Set Signals (Crucial for some ESP32/CP210x chips to start communication)
       // DTR/RTS false usually prevents resetting the board, or allows it to run normal firmware
       try {
-        await this.port.setSignals({ dataTerminalReady: false, requestToSend: false });
+        await this.port.setSignals({ dataTerminalReady: true, requestToSend: false });
+        console.log('[SERIAL] DTR/RTS signals set');
       } catch (e) {
         console.warn("Could not set signals, continuing anyway:", e);
       }
-      
+
+      // 5. CRITICAL: Wait for connection to stabilize (like Python script does)
+      console.log('[SERIAL] Waiting 2 seconds for connection to stabilize...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       if (this.port.writable) {
         this.writer = this.port.writable.getWriter();
+        console.log('[SERIAL] Writer acquired, connection ready!');
         return { success: true };
       }
       return { success: false, error: "Port connected but not writable." };
@@ -83,16 +103,27 @@ class SerialService {
   }
 
   async disconnect() {
+    console.log('[SERIAL] Disconnecting...');
+
+    // Release writer lock first
     if (this.writer) {
       try {
-        await this.writer.releaseLock();
-      } catch (e) { console.error(e); }
+        this.writer.releaseLock();
+        console.log('[SERIAL] Writer lock released');
+      } catch (e) {
+        console.error('[SERIAL] Error releasing writer:', e);
+      }
       this.writer = null;
     }
+
+    // Then close the port
     if (this.port) {
       try {
         await this.port.close();
-      } catch (e) { console.error(e); }
+        console.log('[SERIAL] Port closed');
+      } catch (e) {
+        console.error('[SERIAL] Error closing port:', e);
+      }
       this.port = null;
     }
   }
@@ -103,21 +134,30 @@ class SerialService {
   }
 
   async sendCommand(servo: ServoId, angle: number) {
-    if (!this.writer) return;
+    if (!this.writer) {
+      console.warn('[SERIAL] Cannot send command - no writer available');
+      return;
+    }
 
     // Safety clamping
     const safeAngle = Math.max(0, Math.min(180, angle));
     const pulse = this.angleToPulse(safeAngle);
-    
-    // Protocol: #{servo}P{pulse}\r\n 
-    // Adding \r just in case, though \n is standard for the python script provided
-    const command = `#${servo}P${pulse}\r\n`;
-    
+
+    // Protocol: #{servo}P{pulse}\n
+    // Match the Python script format (just \n, no \r)
+    const command = `#${servo}P${pulse}\n`;
+
+    console.log(`[SERIAL] Sending command: ${command.trim()} (Servo ${servo}, Angle ${safeAngle}°, Pulse ${pulse})`);
+
     try {
       await this.writer.write(this.textEncoder.encode(command));
+      console.log('[SERIAL] Command sent successfully');
+
+      // Small delay to prevent overwhelming the ESP32
+      await new Promise(resolve => setTimeout(resolve, 50));
     } catch (e) {
       console.error("Error writing to serial port:", e);
-      // Attempt to recover writer if lost? 
+      // Attempt to recover writer if lost?
       // usually requires reconnection
     }
   }

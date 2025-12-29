@@ -7,11 +7,11 @@ interface AbelFaceProps {
 
 export const AbelFace: React.FC<AbelFaceProps> = ({ mood }) => {
   
-  // Dynamic styles based on mood
+  // Dynamic styles based on mood - with smooth transitions
   const getMoodStyles = () => {
     switch (mood) {
       case 'working':
-        return 'animate-[bounce_0.2s_infinite]';
+        return 'animate-[pulse_2s_ease-in-out_infinite]';
       case 'annoyed':
         return 'translate-x-1 rotate-3';
       case 'happy':
@@ -31,7 +31,7 @@ export const AbelFace: React.FC<AbelFaceProps> = ({ mood }) => {
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-48 h-48 bg-red-900/10 blur-3xl rounded-full pointer-events-none group-hover:bg-red-900/20 transition-all duration-700"></div>
 
       {/* --- THE ROBOT ARM (NECK/BODY) --- */}
-      <div className={`relative flex flex-col items-center z-10 transition-transform duration-500 ${getMoodStyles()}`}>
+      <div className={`relative flex flex-col items-center z-10 transition-all duration-1000 ease-in-out ${getMoodStyles()}`}>
         
         {/* THE HEAD (Gerard Style) */}
         <div className="relative w-36 h-40 z-30">
@@ -54,7 +54,7 @@ export const AbelFace: React.FC<AbelFaceProps> = ({ mood }) => {
                       
                       {/* Eye shape */}
                       <div className="w-full h-full bg-white relative overflow-hidden rounded-full border border-neutral-300 shadow-inner">
-                          <div className={`absolute top-1 left-2 w-5 h-5 bg-[#3a2020] rounded-full ${mood === 'working' ? 'animate-ping' : ''}`}></div>
+                          <div className={`absolute top-1 left-2 w-5 h-5 bg-[#3a2020] rounded-full transition-all duration-500 ${mood === 'working' ? 'scale-110' : 'scale-100'}`}></div>
                           <div className="absolute top-1 left-3 w-1 h-1 bg-white rounded-full z-10"></div>
                       </div>
                       
@@ -69,7 +69,7 @@ export const AbelFace: React.FC<AbelFaceProps> = ({ mood }) => {
                       <div className="absolute -inset-1 bg-black/40 blur-sm rounded-full"></div>
 
                       <div className="w-full h-full bg-white relative overflow-hidden rounded-full border border-neutral-300 shadow-inner">
-                          <div className={`absolute top-1 right-2 w-5 h-5 bg-[#3a2020] rounded-full ${mood === 'working' ? 'animate-ping' : ''}`}></div>
+                          <div className={`absolute top-1 right-2 w-5 h-5 bg-[#3a2020] rounded-full transition-all duration-500 ${mood === 'working' ? 'scale-110' : 'scale-100'}`}></div>
                           <div className="absolute top-1 right-3 w-1 h-1 bg-white rounded-full z-10"></div>
                       </div>
 

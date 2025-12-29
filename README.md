@@ -2,27 +2,25 @@
 
 A web-based interface for controlling the SIYEENOVE Smart Robot Arm (ESP32-C3/Arduino). This application allows for direct control of 4 servos via the Web Serial API.
 
-## 🚀 Quick Start
+## Quick Start
 
-1. **Connect Hardware**: Plug in your Robot Arm via USB.
-2. **Serve Application**: You must run this app via a local web server (see below).
-3. **Connect in Browser**: Open the URL (e.g., `http://localhost:5173`) in Chrome or Edge.
+1. Connect Hardware: Plug in your Robot Arm via USB.
+2. Serve Application: You must run this app via a local web server (see below).
+3. Connect in Browser: Open the URL (e.g., `http://localhost:5173`) in Chrome or Edge.
 
----
+## Important: Environment Requirements
 
-## ⚠️ Important: Environment Requirements
+The Web Serial API has strict security requirements.
 
-The **Web Serial API** has strict security requirements.
+### Supported Environments
+* Localhost: `http://localhost:port` or `http://127.0.0.1:port` (Treated as secure by browsers).
+* HTTPS: `https://your-website.com` (Requires valid SSL certificate).
+* Browsers: Google Chrome, Microsoft Edge, Opera.
 
-### ✅ Supported Environments
-*   **Localhost**: `http://localhost:port` or `http://127.0.0.1:port` (Treated as secure by browsers).
-*   **HTTPS**: `https://your-website.com` (Requires valid SSL certificate).
-*   **Browsers**: Google Chrome, Microsoft Edge, Opera.
-
-### ❌ Unsupported Environments
-*   **File Protocol**: `file:///C:/Users/.../index.html` (The API is blocked here).
-*   **Standard HTTP**: `http://192.168.1.5` (Blocked, unless it's localhost).
-*   **Browsers**: Firefox (No Web Serial support yet), Safari.
+### Unsupported Environments
+* File Protocol: `file:///C:/Users/.../index.html` (The API is blocked here).
+* Standard HTTP: `http://192.168.1.5` (Blocked, unless it's localhost).
+* Browsers: Firefox (No Web Serial support yet), Safari.
 
 ---
 
@@ -75,8 +73,31 @@ sudo usermod -a -G dialout $USER
 # Then restart your computer or log out/in
 ```
 
+## Features
+
+* Manual servo control via sliders
+* Pre-programmed movement sequences (Wave, Nod, Shake, Hand Over)
+* Voice control using speech recognition and natural language processing
+* Home position reset
+* Emergency stop with automatic return to home
+* Real-time serial communication logging
+* Smooth trajectory motion with progressive deceleration
+
+## Configuration
+
+The application requires environment variables for voice control functionality. Create a `.env` file in the project root:
+
+```
+VITE_GEMINI_API_KEY=your_api_key_here
+VITE_ELEVENLABS_VOICE_ID=your_voice_id_here
+VITE_ELEVENLABS_API_KEY=your_api_key_here
+```
+
+Note: The `.env` file is gitignored and should never be committed to version control.
+
 ## Architecture
 
-*   **Frontend**: React (v19), TypeScript, Tailwind CSS.
-*   **Communication**: Web Serial API.
-*   **Protocol**: Sends string commands (e.g., `#0P1500\r\n`) matching the robot's firmware expectations.
+* Frontend: React (v19), TypeScript, Tailwind CSS
+* Communication: Web Serial API
+* Protocol: Sends string commands (e.g., `#0P1500\n`) matching the robot's firmware expectations
+* Voice: Browser Speech Recognition API with AI command interpretation
