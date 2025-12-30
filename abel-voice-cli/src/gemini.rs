@@ -68,62 +68,114 @@ The robot arm has 4 servos:
 - Servo 0: Base (rotation) - 0-180 degrees
 - Servo 1: Shoulder - 0-180 degrees
 - Servo 2: Elbow - 0-180 degrees
-- Servo 3: Gripper - 60=open, 120=closed
+- Servo 3: Gripper - 55=open, 125=closed
 
-Use this Python API:
+Use this Python API with smooth motion planning:
 
 ```python
 import serial
 import time
+import math
 
-# Initialize serial connection (macOS)
 ser = serial.Serial('/dev/cu.usbserial-140', 115200, timeout=1)
 time.sleep(2)
 
-def move_servo(servo_id, angle, duration_ms=800):
-    """Move servo to angle with smooth motion"""
-    command = f"#{servo_id}M{angle}T{duration_ms}\n"
+current_positions = [90, 90, 90, 90]
+
+def calculate_duration(start_angle, end_angle, speed_factor=1.2):
+    """Calculate smooth movement duration based on angular distance"""
+    distance = abs(end_angle - start_angle)
+    base_duration = int(distance * speed_factor * 10)
+    return max(400, min(base_duration, 3000))
+
+def move_servo_smooth(servo_id, target_angle, duration_ms=None):
+    """Move servo with calculated smooth motion"""
+    if duration_ms is None:
+        duration_ms = calculate_duration(current_positions[servo_id], target_angle)
+
+    command = f"#{servo_id}M{target_angle}T{duration_ms}\n"
     ser.write(command.encode())
-    time.sleep(duration_ms / 1000.0 + 0.1)
+    current_positions[servo_id] = target_angle
+    time.sleep(duration_ms / 1000.0 + 0.15)
+
+def move_coordinated(movements, settle_time=0.2):
+    """Execute multiple servo movements with coordination"""
+    if not movements:
+        return
+
+    max_duration = 0
+    for servo_id, target_angle in movements:
+        duration = calculate_duration(current_positions[servo_id], target_angle)
+        max_duration = max(max_duration, duration)
+
+    for servo_id, target_angle in movements:
+        command = f"#{servo_id}M{target_angle}T{max_duration}\n"
+        ser.write(command.encode())
+        current_positions[servo_id] = target_angle
+
+    time.sleep(max_duration / 1000.0 + settle_time)
+
+def move_trajectory(servo_id, waypoints, segment_duration=None):
+    """Move through multiple waypoints smoothly"""
+    for target in waypoints:
+        duration = segment_duration or calculate_duration(current_positions[servo_id], target, 1.5)
+        move_servo_smooth(servo_id, target, duration)
 
 def go_home():
-    """Return all servos to center position"""
-    move_servo(0, 90)
-    move_servo(1, 90)
-    move_servo(2, 90)
-    move_servo(3, 90)
+    """Return to home position with smooth coordinated motion"""
+    move_coordinated([(0, 90), (1, 90), (2, 90), (3, 90)])
 
 def pick_and_place():
-    """Pick up object and move it 45 degrees"""
-    # Open gripper
-    move_servo(3, 55, 800)
-    # Lower to object
-    move_servo(1, 135, 1200)
-    move_servo(2, 155, 1200)
-    # Grip
-    move_servo(3, 125, 800)
-    # Lift
-    move_servo(2, 90, 1000)
-    move_servo(1, 85, 1000)
-    # Rotate 45 degrees
-    move_servo(0, 135, 1400)
-    # Lower
-    move_servo(1, 135, 1200)
-    move_servo(2, 155, 1200)
-    # Release
-    move_servo(3, 55, 800)
-    # Return home
+    """Pick and place with smooth coordinated motion"""
+    # Move to ready position with open gripper
+    move_servo_smooth(3, 55, 600)
+    time.sleep(0.1)
+    move_coordinated([(1, 100), (2, 100)])
+
+    # Approach object smoothly
+    move_coordinated([(1, 135), (2, 155)])
+    time.sleep(0.3)
+
+    # Close gripper with firm grip
+    move_servo_smooth(3, 125, 800)
+    time.sleep(0.2)
+
+    # Lift with coordinated motion
+    move_coordinated([(1, 85), (2, 90)])
+    time.sleep(0.2)
+
+    # Rotate to target position
+    move_servo_smooth(0, 135, None)
+    time.sleep(0.2)
+
+    # Lower to place position
+    move_coordinated([(1, 135), (2, 155)])
+    time.sleep(0.3)
+
+    # Release gripper
+    move_servo_smooth(3, 55, 800)
+    time.sleep(0.2)
+
+    # Return to home
     go_home()
 ```
+
+CRITICAL MOTION PLANNING RULES:
+1. Always use move_servo_smooth() for single servo movements - it calculates proper timing
+2. Use move_coordinated() when multiple servos need to move together smoothly
+3. Add settle_time delays (0.2-0.3s) after reaching positions before gripper operations
+4. Never use fixed durations - let calculate_duration() compute based on angular distance
+5. Gripper operations should have explicit durations: 600-800ms
+6. Always include time.sleep() after movements for mechanical settling
 
 Generate complete, executable Python scripts. Include imports, serial setup, and clean code structure.
 Always close the serial connection at the end with: ser.close()
 
 Examples:
-- "wave" -> rotate base back and forth
+- "wave" -> use move_trajectory for base servo
 - "pick and place" -> use the pick_and_place function
-- "open gripper" -> move_servo(3, 55)
-- "close gripper" -> move_servo(3, 120)
+- "open gripper" -> move_servo_smooth(3, 55, 600)
+- "close gripper" -> move_servo_smooth(3, 125, 800)
 - "go home" -> go_home()
 
 Now generate a script for this command:
@@ -190,7 +242,7 @@ Servo IDs:
 - 0: Base (rotation)
 - 1: Shoulder
 - 2: Elbow
-- 3: Gripper (60=open, 120=closed)
+- 3: Gripper (55=open, 125=closed)
 
 Return JSON in this format:
 {
@@ -205,8 +257,8 @@ Examples:
 - "wave" -> {"action": "sequence", "sequence_name": "WAVE"}
 - "pick and place" -> {"action": "sequence", "sequence_name": "PICK_PLACE"}
 - "move base to 45 degrees" -> {"action": "move", "servo": 0, "angle": 45}
-- "open gripper" -> {"action": "move", "servo": 3, "angle": 60}
-- "close gripper" -> {"action": "move", "servo": 3, "angle": 120}
+- "open gripper" -> {"action": "move", "servo": 3, "angle": 55}
+- "close gripper" -> {"action": "move", "servo": 3, "angle": 125}
 - "go home" -> {"action": "home"}
 - "stop" -> {"action": "stop"}
 
