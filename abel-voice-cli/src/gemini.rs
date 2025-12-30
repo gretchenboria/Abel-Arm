@@ -64,11 +64,11 @@ impl GeminiClient {
     pub async fn generate_robot_script(&self, command: &str) -> Result<String> {
         let system_prompt = r##"You are a robot control code generator. Generate Python scripts to control a robot arm based on natural language commands.
 
-The robot arm has 4 servos:
+The robot arm has 4 servos (ESP32-C3 FNK0100):
 - Servo 0: Base (rotation) - 0-180 degrees
 - Servo 1: Shoulder - 0-180 degrees
 - Servo 2: Elbow - 0-180 degrees
-- Servo 3: Gripper - 55=open, 125=closed
+- Servo 3: Gripper - 120=open, 60=closed
 
 Use this Python API with smooth motion planning:
 
@@ -126,38 +126,68 @@ def go_home():
     move_coordinated([(0, 90), (1, 90), (2, 90), (3, 90)])
 
 def pick_and_place():
-    """Pick and place with smooth coordinated motion"""
-    # Move to ready position with open gripper
-    move_servo_smooth(3, 55, 600)
-    time.sleep(0.1)
-    move_coordinated([(1, 100), (2, 100)])
+    """
+    Hardware-calibrated pick and place for ESP32-C3 FNK0100 arm
+    Tested positions: Base=81deg, Shoulder=9deg, Elbow=84deg
+    Gripper: 120=open, 60=closed
+    """
+    # APPROACH PHASE - Open gripper and rotate to pick position
+    move_servo_smooth(3, 120, 800)
+    time.sleep(0.3)
+    move_servo_smooth(0, 81, None)
+    time.sleep(0.2)
 
-    # Approach object smoothly
-    move_coordinated([(1, 135), (2, 155)])
+    # Multi-stage descent to prevent slamming
+    move_servo_smooth(1, 50, None)
+    time.sleep(0.2)
+    move_servo_smooth(1, 20, None)
+    time.sleep(0.2)
+
+    # Final approach with coordinated shoulder and elbow
+    move_coordinated([(1, 9), (2, 84)])
+    time.sleep(0.4)
+
+    # GRIP PHASE - Two-stage grip: gentle touch then firm close
+    move_servo_smooth(3, 90, 700)
+    time.sleep(0.3)
+    move_servo_smooth(3, 60, 800)
     time.sleep(0.3)
 
-    # Close gripper with firm grip
-    move_servo_smooth(3, 125, 800)
+    # LIFT PHASE - Staged lift with grip confirmation
+    move_servo_smooth(1, 50, None)
     time.sleep(0.2)
-
-    # Lift with coordinated motion
-    move_coordinated([(1, 85), (2, 90)])
+    move_servo_smooth(1, 90, None)
     time.sleep(0.2)
-
-    # Rotate to target position
-    move_servo_smooth(0, 135, None)
-    time.sleep(0.2)
-
-    # Lower to place position
-    move_coordinated([(1, 135), (2, 155)])
+    move_servo_smooth(2, 90, None)
     time.sleep(0.3)
+
+    # TRANSPORT PHASE - Rotate 45 degrees to place position
+    move_servo_smooth(0, 126, None)
+    time.sleep(0.4)
+
+    # PLACE PHASE - Multi-stage descent
+    move_servo_smooth(1, 50, None)
+    time.sleep(0.2)
+    move_servo_smooth(1, 20, None)
+    time.sleep(0.2)
+    move_coordinated([(1, 9), (2, 84)])
+    time.sleep(0.4)
 
     # Release gripper
-    move_servo_smooth(3, 55, 800)
-    time.sleep(0.2)
+    move_servo_smooth(3, 120, 800)
+    time.sleep(0.3)
 
-    # Return to home
-    go_home()
+    # RETURN HOME PHASE - Lift and return to neutral
+    move_servo_smooth(1, 50, None)
+    time.sleep(0.2)
+    move_servo_smooth(1, 90, None)
+    time.sleep(0.2)
+    move_servo_smooth(2, 90, None)
+    time.sleep(0.2)
+    move_servo_smooth(0, 90, None)
+    time.sleep(0.3)
+    move_servo_smooth(3, 90, 600)
+    time.sleep(0.2)
 ```
 
 CRITICAL MOTION PLANNING RULES:
@@ -173,9 +203,9 @@ Always close the serial connection at the end with: ser.close()
 
 Examples:
 - "wave" -> use move_trajectory for base servo
-- "pick and place" -> use the pick_and_place function
-- "open gripper" -> move_servo_smooth(3, 55, 600)
-- "close gripper" -> move_servo_smooth(3, 125, 800)
+- "pick and place" -> use the pick_and_place function with calibrated positions
+- "open gripper" -> move_servo_smooth(3, 120, 600)
+- "close gripper" -> move_servo_smooth(3, 60, 800)
 - "go home" -> go_home()
 
 Now generate a script for this command:
@@ -238,11 +268,11 @@ Supported actions:
 - "stop": Emergency stop
 - "unknown": Command not recognized
 
-Servo IDs:
+Servo IDs (ESP32-C3 FNK0100):
 - 0: Base (rotation)
 - 1: Shoulder
 - 2: Elbow
-- 3: Gripper (55=open, 125=closed)
+- 3: Gripper (120=open, 60=closed)
 
 Return JSON in this format:
 {
@@ -257,8 +287,8 @@ Examples:
 - "wave" -> {"action": "sequence", "sequence_name": "WAVE"}
 - "pick and place" -> {"action": "sequence", "sequence_name": "PICK_PLACE"}
 - "move base to 45 degrees" -> {"action": "move", "servo": 0, "angle": 45}
-- "open gripper" -> {"action": "move", "servo": 3, "angle": 55}
-- "close gripper" -> {"action": "move", "servo": 3, "angle": 125}
+- "open gripper" -> {"action": "move", "servo": 3, "angle": 120}
+- "close gripper" -> {"action": "move", "servo": 3, "angle": 60}
 - "go home" -> {"action": "home"}
 - "stop" -> {"action": "stop"}
 
